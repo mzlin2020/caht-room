@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  username   String   @unique @db.VarChar(50)
+  password   String   @db.VarChar(50)
+  nickName   String   @db.VarChar(50)
+  email      String   @unique @db.VarChar(50)
+  headPic    String   @default("") @db.VarChar(100)
+  createTime DateTime @default(now())
+  updateTime DateTime @updatedAt
+
+  friends        Friendship[] @relation("userToFriend")
+  inverseFriends Friendship[] @relation("friendToUser")
+}
+
+model Friendship {
+  user   User @relation("userToFriend", fields: [userId], references: [id])
+  userId Int
+
+  friend   User @relation("friendToUser", fields: [friendId], references: [id])
+  friendId Int
+
+  @@id([userId, friendId])
+}
+
+model FriendRequest {
+  id         Int      @id @default(autoincrement())
+  // 请求发送方
+  fromUserId Int
+  // 待添加好友
+  toUserId   Int
+  reason     String   @db.VarChar(100)
+  // 状态 0请求中、1已同意 2已拒绝
+  status     Int
+  createTime DateTime @default(now())
+  updateTime DateTime @updatedAt
+}
+
+model Chatroom {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(50)
+  //ture群聊 false单聊
+  type       Boolean  @default(false)
+  createTime DateTime @default(now())
+  updateTime DateTime @updatedAt
+}
+
+model UserChatroom {
+  userId     Int
+  chatroomId Int
+
+  @@id([userId, chatroomId])
+}
+
+model ChatHistory {
+  id         Int      @id @default(autoincrement())
+  content    String   @db.VarChar(500)
+  //聊天记录类型 text:0、image:1、file:2
+  type       Int
+  chatroomId Int
+  senderId   Int
+  createTime DateTime @default(now())
+  updateTime DateTime @updatedAt
+}
+
+model Favorite {
+  id            Int      @id @default(autoincrement())
+  chatHistoryId Int
+  userId        Int
+  createTime    DateTime @default(now())
+  updateTime    DateTime @updatedAt
+}
